@@ -11,17 +11,17 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var defaultCorsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, accept',
+  'access-control-max-age': 10 // Seconds.
+};
 var results = [];
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
-  var defaultCorsHeaders = {
-    'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'access-control-allow-headers': 'content-type, accept',
-    'access-control-max-age': 10 // Seconds.
-  };
   // headers and URL, and about the outgoing response, such as its status
   // and content.
   //
@@ -33,42 +33,27 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  var method = request.method;
+  var url = request.url;
+  console.log('Serving request type ' + method + ' for url ' + url);
   var headers = defaultCorsHeaders;
-  headers['Content-Type'] = 'application/json';
+  headers['Content-Type'] = 'text/plain';
   var statusCode = 200;
   // var ura = url.parse(request.url, true).query;
   // console.log(ura)
   // The outgoing status.
-  if (request.url !== '/classes/messages') {
-    statusCode = 404;
-    response.writeHead(statusCode, headers);
-    response.end();
-  }
-  if (request.method === 'GET') {
+  if (method === 'GET' && url === '/classes/messages' || method === 'OPTIONS') {
     statusCode = 200;
-    response.writeHead(statusCode, headers);
-    // request.pipe(response);
-    response.end(JSON.stringify({results: results} ));
-
-  }
-  
-  if (request.method === 'POST') {
+  } else if (method === 'POST') {
     statusCode = 201;
     request.on('data', function(chunk) {
-      if (chunk !== undefined) {
-        console.log(JSON.parse(chunk.toString('utf8')));
-        results.push(JSON.parse(chunk.toString('utf8')));
-        response.writeHead(statusCode, headers);
-        response.end(JSON.stringify({results: results} ));
-      }
-
+      results.push(JSON.parse(chunk));
     });
+  } else if (url !== '/classes/messages') {
+    statusCode = 404;
   }
-  
-  if (request.method === 'OPTIONS') {
-    
-  }
+  response.writeHead(statusCode, headers);
+  response.end(JSON.stringify({results: results} ));
   // See the note below about CORS headers.
 
   // Tell the client we are sending them plain text.
