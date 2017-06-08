@@ -40,22 +40,29 @@ var requestHandler = function(request, response) {
   // var ura = url.parse(request.url, true).query;
   // console.log(ura)
   // The outgoing status.
+  if (request.url !== '/classes/messages') {
+    statusCode = 404;
+    response.writeHead(statusCode, headers);
+    response.end();
+  }
   if (request.method === 'GET') {
     statusCode = 200;
     response.writeHead(statusCode, headers);
-    response.write(JSON.stringify({results: results}));
-    response.end();
+    // request.pipe(response);
+    response.end(JSON.stringify({results: results} ));
 
   }
   
   if (request.method === 'POST') {
     statusCode = 201;
     request.on('data', function(chunk) {
-      console.log(chunk.toString('utf8'));
-      results.push(JSON.parse(chunk.toString('utf8')));
-      response.writeHead(statusCode, headers);
-      response.write(JSON.stringify({results: results} ));
-      response.end();
+      if (chunk !== undefined) {
+        console.log(JSON.parse(chunk.toString('utf8')));
+        results.push(JSON.parse(chunk.toString('utf8')));
+        response.writeHead(statusCode, headers);
+        response.end(JSON.stringify({results: results} ));
+      }
+
     });
   }
   
@@ -68,11 +75,10 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'text/plain';
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+  // response.writeHead(statusCode, headers);
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
